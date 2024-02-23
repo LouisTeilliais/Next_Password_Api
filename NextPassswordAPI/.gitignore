@@ -1,0 +1,9 @@
+# Binaries
+bin/
+obj/
+
+# User-specific files
+*.user
+
+# Visual Studio Code
+.vscode/
