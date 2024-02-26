@@ -17,6 +17,13 @@ namespace NextPassswordAPI.Controllers
             _itemService = itemService;
         }
 
+        [HttpGet()]
+        public async Task<IActionResult> GetAllItems()
+        {
+            var items = await _itemService.GetAllItemAsync();
+            return Ok(items);
+        }
+
         [HttpPost]
         public async Task<IActionResult> CreateItem([FromBody] ItemDto itemDto)
         {
@@ -38,12 +45,12 @@ namespace NextPassswordAPI.Controllers
             }
         }
 
-        [HttpGet()]
-        public async Task<IActionResult> GetItemById(Guid id)
+        [HttpGet("{itemId}")]
+        public async Task<IActionResult> GetItemById(Guid itemId)
         {
             try
             {
-                var item = await _itemService.FindByIdAsync(id);
+                var item = await _itemService.FindByIdAsync(itemId);
 
                 if (item == null)
                 {
@@ -55,7 +62,8 @@ namespace NextPassswordAPI.Controllers
                     Title = item.Title,
                     Notes = item.Notes,
                     Url = item.Url,
-                    Username = item.Username
+                    Username = item.Username,
+                    PasswordHash= item.PasswordHash
                 };
 
                 return Ok(itemDto);
@@ -89,5 +97,24 @@ namespace NextPassswordAPI.Controllers
             }
         }
 
+        [HttpPut()]
+        public async Task<IActionResult> UpdateItem(Guid id, [FromBody] Item item)
+        {
+            try
+            {
+                var updatedItemResult = await _itemService.UpdateItemAsync(item, id);
+
+                if (updatedItemResult == null)
+                {
+                    return NotFound(); // 404 si le produit n'est pas trouvé
+                }
+
+                return Ok(updatedItemResult);
+            }
+            catch (Exception e)
+            {
+                throw new Exception("Une erreur s'est produite lors de la mise à jour du mot de passe", e);
+            }
+        }
     }
 }

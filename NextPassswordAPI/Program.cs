@@ -13,7 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(
-/*    options =>
+    options =>
 {
     options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
     {
@@ -23,8 +23,7 @@ builder.Services.AddSwaggerGen(
     });
 
     options.OperationFilter<SecurityRequirementsOperationFilter>();
-}*/
-);
+});
 
 
 IConfiguration configuration = new ConfigurationBuilder()

@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Cryptography.KeyDerivation;
-using NextPassswordAPI.Data;
 using NextPassswordAPI.Dto;
 using NextPassswordAPI.Models;
 using NextPassswordAPI.Repository.Interfaces;
@@ -15,6 +14,18 @@ namespace NextPassswordAPI.Services
         public ItemService(IItemRepository itemRepository)
         {
             _itemRepository = itemRepository ?? throw new ArgumentNullException(nameof(itemRepository));
+        }
+
+        public async Task<List<Item>> GetAllItemAsync()
+        {
+            try
+            {
+                return await _itemRepository.GetAllItemAsync();
+            }
+            catch (Exception ex) { 
+            
+                throw new Exception($"Une erreur s'est produite lors de la récupération des mots de passe. ", ex);
+            }
         }
 
 
@@ -53,6 +64,7 @@ namespace NextPassswordAPI.Services
             }
         }
 
+
         public async Task DeleteItemAsync(Guid id)
         {
             try
@@ -74,6 +86,25 @@ namespace NextPassswordAPI.Services
             catch (Exception ex)
             {
                 throw new Exception($"Une erreur s'est produite lors de la récupération du mot de passe: {id}. ", ex);
+            }
+        }
+
+        public Task<Item?> UpdateItemAsync(Item item, Guid id)
+        {
+            try
+            {
+                if (item == null)
+                {
+                    throw new ArgumentNullException(nameof(item));
+                }
+
+                return _itemRepository.UpdateItemAsync(item, id);
+                    
+
+
+            }catch (Exception ex)
+            {
+                throw new Exception("Une erreur s'est produite lors de la mise à jour du mot de passe.", ex);
             }
         }
     }
