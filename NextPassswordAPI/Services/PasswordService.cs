@@ -16,11 +16,11 @@ namespace NextPassswordAPI.Services
             _passwordRepository = passwordRepository ?? throw new ArgumentNullException(nameof(passwordRepository));
         }
 
-        public async Task<List<Password>> GetAllPasswordAsync()
+        public async Task<IEnumerable<Password>> GetAllPasswordByUserAsync(string userId)
         {
             try
             {
-                return await _passwordRepository.GetAllPasswordAsync();
+                return await _passwordRepository.GetAllPasswordByUserAsync(userId);
             }
             catch (Exception ex) { 
             
@@ -29,7 +29,7 @@ namespace NextPassswordAPI.Services
         }
 
 
-        public async Task AddPasswordAsync(PasswordDto passwordDto)
+        public async Task AddPasswordAsync(string userId, PasswordDto passwordDto)
         {
             try
             {
@@ -48,11 +48,13 @@ namespace NextPassswordAPI.Services
 
                 var password = new Password
                 {
-                    Title = passwordDto.Title,
+                    Title = passwordDto!.Title,
                     Notes = passwordDto.Notes,
                     Url = passwordDto.Url,
                     Username = passwordDto.Username,
                     PasswordHash = hashed,
+                    UserId= userId
+                    
                 };
 
                 await _passwordRepository.AddPasswordAsync(password);

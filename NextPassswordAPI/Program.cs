@@ -1,12 +1,20 @@
+using AspNet.Security.OAuth.Validation;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using NextPassswordAPI.Data;
+using NextPassswordAPI.Models;
 using NextPassswordAPI.Repository;
 using NextPassswordAPI.Repository.Interfaces;
 using NextPassswordAPI.Services;
 using NextPassswordAPI.Services.Interfaces;
 using Swashbuckle.AspNetCore.Filters;
+using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,11 +41,41 @@ IConfiguration configuration = new ConfigurationBuilder()
 
 builder.Services.AddDbContext<DataContext>(options => options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddDbContext<DataContext>();
-
 builder.Services.AddAuthorization();
 
-builder.Services.AddIdentityApiEndpoints<IdentityUser>().AddEntityFrameworkStores<DataContext>();
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = "Identity.Bearer";
+    options.DefaultSignInScheme = "Identity.Bearer";
+    options.DefaultAuthenticateScheme = "Identity.Bearer";
+    options.DefaultChallengeScheme = "Identity.Bearer";
+})
+   .AddCookie("Identity.Bearer", options =>
+   {
+       options.Cookie.Name = "access_token";
+       options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
+   });
+
+builder.Services.AddControllers().AddJsonOptions(x =>
+                x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+
+/*builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("SECRET_KEY"))
+    };
+});*/
+
+builder.Services.AddDefaultIdentity<ApplicationUser> ()
+        .AddEntityFrameworkStores<DataContext>();
 
 /* Services */
 builder.Services.AddScoped<IPasswordService, PasswordService>();
@@ -55,10 +93,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.MapIdentityApi<IdentityUser>();
+app.MapIdentityApi<ApplicationUser>();
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();    
 app.UseAuthorization();
 
 app.MapControllers();

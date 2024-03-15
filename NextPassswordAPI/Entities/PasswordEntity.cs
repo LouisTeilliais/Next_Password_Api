@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Identity;
+using NextPassswordAPI.Models;
 
 namespace NextPassswordAPI.Entities
 {
@@ -25,6 +27,10 @@ namespace NextPassswordAPI.Entities
 
         [Column(name: "url")]
         public string? Url { get; set; }
+
+        [Key, ForeignKey("UserId")]
+        public string UserId { get; set; }
+        public ApplicationUser User { get; set; }
 
         public PasswordEntity(DateTime createdAt, DateTime updatedAt) : base(createdAt, updatedAt) { }
     }

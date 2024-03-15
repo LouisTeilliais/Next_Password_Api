@@ -15,11 +15,11 @@ namespace NextPassswordAPI.Repository
             _dataContext = dataContext ?? throw new ArgumentNullException(nameof(dataContext)); ;
         }
 
-        public async Task<List<Password>> GetAllPasswordAsync()
+        public async Task<IEnumerable<Password>> GetAllPasswordByUserAsync(string userId)
         {
             try
             {
-                return await _dataContext.Passwords.ToListAsync();
+                return await _dataContext!.Passwords.Where(p => p.UserId == userId).ToListAsync();
             }
             catch (Exception ex)
             {
@@ -32,7 +32,7 @@ namespace NextPassswordAPI.Repository
 
             try
             {
-                _dataContext.Passwords.Add(password);
+                _dataContext!.Passwords.Add(password);
                 await _dataContext.SaveChangesAsync();
 
             }
@@ -48,15 +48,15 @@ namespace NextPassswordAPI.Repository
         {
             try
             {
-                var password = await _dataContext.Passwords.FindAsync(id);
+                var password = await _dataContext!.Passwords.FindAsync(id);
 
                 if (password == null)
                 {
                     throw new InvalidOperationException($"Le mot de passe à l'ID {password?.Id} n'est pas trouvé.");
                 }
 
-                _dataContext.Passwords.Remove(password);
-                await _dataContext.SaveChangesAsync();
+                _dataContext!.Passwords.Remove(password);
+                await _dataContext!.SaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -68,7 +68,7 @@ namespace NextPassswordAPI.Repository
         {
             try
             {
-                return await _dataContext.Passwords.FindAsync(id);
+                return await _dataContext!.Passwords.FindAsync(id);
             }
             catch (Exception ex)
             {
@@ -82,7 +82,7 @@ namespace NextPassswordAPI.Repository
             try
             {
 
-                var updatedProduct = await _dataContext.Passwords.FindAsync(id);
+                var updatedProduct = await _dataContext!.Passwords.FindAsync(id);
 
                 if (updatedProduct == null)
                 {
@@ -95,9 +95,9 @@ namespace NextPassswordAPI.Repository
                 updatedProduct.Notes = password.Notes;
                 updatedProduct.PasswordHash = password.PasswordHash;
 
-                _dataContext.Entry(updatedProduct).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
+                _dataContext!.Entry(updatedProduct).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
 
-                await _dataContext.SaveChangesAsync();
+                await _dataContext!.SaveChangesAsync();
 
                 return updatedProduct;
             }

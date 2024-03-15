@@ -4,7 +4,7 @@ namespace NextPassswordAPI.Repository.Interfaces
 {
     public interface IPasswordRepository
     { 
-         Task<List<Password>> GetAllPasswordAsync();
+         Task<IEnumerable<Password>> GetAllPasswordByUserAsync(string userId);
          Task AddPasswordAsync(Password password);
 
          Task<Password?> FindByIdAsync(Guid id);

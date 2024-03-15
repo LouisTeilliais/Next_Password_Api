@@ -11,5 +11,9 @@ namespace NextPassswordAPI.Models
         public string? Notes { get; set; }
         public string? Username { get; set; }
         public string? Url { get; set; }
+
+        public string UserId { get; set; }
+        
+        public ApplicationUser User { get; set; }
     }
 }

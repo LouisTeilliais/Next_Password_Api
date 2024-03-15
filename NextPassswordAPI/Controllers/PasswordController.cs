@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using NextPassswordAPI.Dto;
 using NextPassswordAPI.Models;
@@ -11,16 +12,19 @@ namespace NextPassswordAPI.Controllers
     public class PasswordController : ControllerBase
     {
         public readonly IPasswordService _passwordService;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public PasswordController(IPasswordService itemService)
+        public PasswordController(UserManager<ApplicationUser> userManager, IPasswordService passwordService)
         {
-            _passwordService = itemService;
+            _userManager = userManager;
+            _passwordService = passwordService;
         }
 
         [HttpGet()]
-        public async Task<IActionResult> GetAllPasswords()
+        public async Task<IActionResult> GetAllPasswordByUserAsync()
         {
-            var items = await _passwordService.GetAllPasswordAsync();
+            var user = await _userManager.GetUserAsync(User);
+            var items = await _passwordService.GetAllPasswordByUserAsync(user.Id);
             return Ok(items);
         }
 
@@ -30,12 +34,18 @@ namespace NextPassswordAPI.Controllers
 
             try
             {
+                var user = await _userManager.GetUserAsync(User);
+                if (user == null)
+                {
+                    return Unauthorized(); // User not found or not authenticated
+                }
+
                 if (passwordDto == null)
                 {
                     return BadRequest("Item is empty !");
                 }
 
-                await _passwordService.AddPasswordAsync(passwordDto);
+                await _passwordService.AddPasswordAsync(user.Id, passwordDto);
                 return Ok();
 
             }
