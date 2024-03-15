@@ -55,16 +55,24 @@ namespace NextPassswordAPI.Controllers
             }
         }
 
-        [HttpGet("{itemId}")]
+        [HttpGet("{passwordId}")]
         public async Task<IActionResult> GetPasswordById(Guid itemId)
         {
             try
             {
-                var item = await _passwordService.FindByIdAsync(itemId);
+                var user = await _userManager.GetUserAsync(User);
+
+                if (user == null)
+                {
+                    return NotFound(); // User not found or not authenticated
+                }
+
+
+                var item = await _passwordService.FindByIdAsync(user.Id, itemId);
 
                 if (item == null)
                 {
-                    return NotFound(); // 404 si le produit n'est pas trouvé
+                    return NotFound(); // 404 si le produit n'est pas .
                 }
 
                 var passwordDto = new PasswordDto

@@ -44,11 +44,11 @@ namespace NextPassswordAPI.Repository
             }
         }
 
-        public async Task DeletePasswordAsync(Guid id)
+        public async Task DeletePasswordAsync(string userId, Guid id)
         {
             try
             {
-                var password = await _dataContext!.Passwords.FindAsync(id);
+                var password = await _dataContext!.Passwords.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
 
                 if (password == null)
                 {
@@ -64,11 +64,11 @@ namespace NextPassswordAPI.Repository
             }
         }
 
-        public async Task<Password?> FindByIdAsync(Guid id)
+        public async Task<Password?> FindByIdAsync(string userId, Guid id)
         {
             try
             {
-                return await _dataContext!.Passwords.FindAsync(id);
+                return await _dataContext!.Passwords.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
             }
             catch (Exception ex)
             {

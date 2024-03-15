@@ -67,11 +67,11 @@ namespace NextPassswordAPI.Services
         }
 
 
-        public async Task DeletePasswordAsync(Guid id)
+        public async Task DeletePasswordAsync(string userId, Guid id)
         {
             try
             {
-                await _passwordRepository.DeletePasswordAsync(id);
+                await _passwordRepository.DeletePasswordAsync(userId, id);
             }
             catch (Exception ex)
             {
@@ -79,11 +79,11 @@ namespace NextPassswordAPI.Services
             }
         }
 
-        public async Task<Password?> FindByIdAsync(Guid id)
+        public async Task<Password?> FindByIdAsync(string userId, Guid id)
         {
             try
             {
-                return await _passwordRepository.FindByIdAsync(id)!;
+                return await _passwordRepository.FindByIdAsync(userId, id)!;
             }
             catch (Exception ex)
             {
