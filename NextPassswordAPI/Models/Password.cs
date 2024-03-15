@@ -2,7 +2,7 @@
 
 namespace NextPassswordAPI.Models
 {
-    public class Item : IItem
+    public class Password : IPassword
     {
         public Guid? Id { get; set; }
 

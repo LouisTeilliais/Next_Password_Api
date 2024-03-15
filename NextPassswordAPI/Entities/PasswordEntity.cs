@@ -3,8 +3,8 @@ using System.ComponentModel.DataAnnotations;
 
 namespace NextPassswordAPI.Entities
 {
-    [Table("items")]
-    public class ItemEntity : BaseEntity
+    [Table("passwords")]
+    public class PasswordEntity : BaseEntity
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -26,6 +26,6 @@ namespace NextPassswordAPI.Entities
         [Column(name: "url")]
         public string? Url { get; set; }
 
-        public ItemEntity(DateTime createdAt, DateTime updatedAt) : base(createdAt, updatedAt) { }
+        public PasswordEntity(DateTime createdAt, DateTime updatedAt) : base(createdAt, updatedAt) { }
     }
 }

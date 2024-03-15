@@ -40,10 +40,10 @@ builder.Services.AddAuthorization();
 builder.Services.AddIdentityApiEndpoints<IdentityUser>().AddEntityFrameworkStores<DataContext>();
 
 /* Services */
-builder.Services.AddScoped<IItemService, ItemService>();
+builder.Services.AddScoped<IPasswordService, PasswordService>();
 
 /* Repositories */
-builder.Services.AddScoped<IItemRepository, ItemRepository>();
+builder.Services.AddScoped<IPasswordRepository, PasswordRepository>();
 
 var app = builder.Build();
 

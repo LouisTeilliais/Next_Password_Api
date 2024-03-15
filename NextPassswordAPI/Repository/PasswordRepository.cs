@@ -5,21 +5,21 @@ using NextPassswordAPI.Repository.Interfaces;
 
 namespace NextPassswordAPI.Repository
 {
-    public class ItemRepository : IItemRepository
+    public class PasswordRepository : IPasswordRepository
     {
 
         private readonly DataContext? _dataContext;
 
-        public ItemRepository(DataContext dataContext)
+        public PasswordRepository(DataContext dataContext)
         {
             _dataContext = dataContext ?? throw new ArgumentNullException(nameof(dataContext)); ;
         }
 
-        public async Task<List<Item>> GetAllItemAsync()
+        public async Task<List<Password>> GetAllPasswordAsync()
         {
             try
             {
-                return await _dataContext.Items.ToListAsync();
+                return await _dataContext.Passwords.ToListAsync();
             }
             catch (Exception ex)
             {
@@ -27,12 +27,12 @@ namespace NextPassswordAPI.Repository
             }
         }
 
-        public async Task AddItemAsync(Item item)
+        public async Task AddPasswordAsync(Password password)
         {
 
             try
             {
-                _dataContext.Items.Add(item);
+                _dataContext.Passwords.Add(password);
                 await _dataContext.SaveChangesAsync();
 
             }
@@ -44,18 +44,18 @@ namespace NextPassswordAPI.Repository
             }
         }
 
-        public async Task DeleteItemAsync(Guid id)
+        public async Task DeletePasswordAsync(Guid id)
         {
             try
             {
-                var item = await _dataContext.Items.FindAsync(id);
+                var password = await _dataContext.Passwords.FindAsync(id);
 
-                if (item == null)
+                if (password == null)
                 {
-                    throw new InvalidOperationException($"Le mot de passe à l'ID {item?.Id} n'est pas trouvé.");
+                    throw new InvalidOperationException($"Le mot de passe à l'ID {password?.Id} n'est pas trouvé.");
                 }
 
-                _dataContext.Items.Remove(item);
+                _dataContext.Passwords.Remove(password);
                 await _dataContext.SaveChangesAsync();
             }
             catch (Exception ex)
@@ -64,11 +64,11 @@ namespace NextPassswordAPI.Repository
             }
         }
 
-        public async Task<Item?> FindByIdAsync(Guid id)
+        public async Task<Password?> FindByIdAsync(Guid id)
         {
             try
             {
-                return await _dataContext.Items.FindAsync(id);
+                return await _dataContext.Passwords.FindAsync(id);
             }
             catch (Exception ex)
             {
@@ -77,23 +77,23 @@ namespace NextPassswordAPI.Repository
 
         }
 
-        public async Task<Item> UpdateItemAsync(Item item, Guid id)
+        public async Task<Password> UpdatePasswordAsync(Password password, Guid id)
         {
             try
             {
 
-                var updatedProduct = await _dataContext.Items.FindAsync(id);
+                var updatedProduct = await _dataContext.Passwords.FindAsync(id);
 
                 if (updatedProduct == null)
                 {
                     throw new InvalidOperationException($"Le mot de passe n'a pas été trouvé.");
                 }
 
-                updatedProduct.Title = item.Title;
-                updatedProduct.Url= item.Url;
-                updatedProduct.Username = item.Username;
-                updatedProduct.Notes = item.Notes;
-                updatedProduct.PasswordHash = item.PasswordHash;
+                updatedProduct.Title = password.Title;
+                updatedProduct.Url= password.Url;
+                updatedProduct.Username = password.Username;
+                updatedProduct.Notes = password.Notes;
+                updatedProduct.PasswordHash = password.PasswordHash;
 
                 _dataContext.Entry(updatedProduct).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
 

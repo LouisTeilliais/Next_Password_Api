@@ -1,6 +1,6 @@
 ﻿namespace NextPassswordAPI.Models.Interfaces
 {
-    public interface IItem
+    public interface IPassword
     {
     }
 }

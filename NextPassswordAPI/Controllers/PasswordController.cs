@@ -7,35 +7,35 @@ using NextPassswordAPI.Services.Interfaces;
 namespace NextPassswordAPI.Controllers
 {
     [ApiController]
-    [Route("api/items"), Authorize]
-    public class ItemController : ControllerBase
+    [Route("api/password"), Authorize]
+    public class PasswordController : ControllerBase
     {
-        public readonly IItemService _itemService;
+        public readonly IPasswordService _passwordService;
 
-        public ItemController(IItemService itemService)
+        public PasswordController(IPasswordService itemService)
         {
-            _itemService = itemService;
+            _passwordService = itemService;
         }
 
         [HttpGet()]
-        public async Task<IActionResult> GetAllItems()
+        public async Task<IActionResult> GetAllPasswords()
         {
-            var items = await _itemService.GetAllItemAsync();
+            var items = await _passwordService.GetAllPasswordAsync();
             return Ok(items);
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateItem([FromBody] ItemDto itemDto)
+        public async Task<IActionResult> CreateItem([FromBody] PasswordDto passwordDto)
         {
 
             try
             {
-                if (itemDto == null)
+                if (passwordDto == null)
                 {
                     return BadRequest("Item is empty !");
                 }
 
-                await _itemService.AddItemAsync(itemDto);
+                await _passwordService.AddPasswordAsync(passwordDto);
                 return Ok();
 
             }
@@ -46,18 +46,18 @@ namespace NextPassswordAPI.Controllers
         }
 
         [HttpGet("{itemId}")]
-        public async Task<IActionResult> GetItemById(Guid itemId)
+        public async Task<IActionResult> GetPasswordById(Guid itemId)
         {
             try
             {
-                var item = await _itemService.FindByIdAsync(itemId);
+                var item = await _passwordService.FindByIdAsync(itemId);
 
                 if (item == null)
                 {
                     return NotFound(); // 404 si le produit n'est pas trouvé
                 }
 
-                var itemDto = new ItemDto
+                var passwordDto = new PasswordDto
                 {
                     Title = item.Title,
                     Notes = item.Notes,
@@ -66,7 +66,7 @@ namespace NextPassswordAPI.Controllers
                     PasswordHash= item.PasswordHash
                 };
 
-                return Ok(itemDto);
+                return Ok(passwordDto);
 
             }
             catch (Exception e)
@@ -76,18 +76,18 @@ namespace NextPassswordAPI.Controllers
         }
 
         [HttpDelete()]
-        public async Task<IActionResult> DeleteItem(Guid id)
+        public async Task<IActionResult> DeletePassword(Guid id)
         {
             try
             {
-                Item item = await _itemService.FindByIdAsync(id);
+                Password password = await _passwordService.FindByIdAsync(id);
 
-                if (item == null)
+                if (password == null)
                 {
                     return NotFound(); 
                 }
 
-                await _itemService.DeleteItemAsync(id);
+                await _passwordService.DeletePasswordAsync(id);
 
                 return Ok("Le mot de passe à bien été supprimé");
             }
@@ -98,18 +98,18 @@ namespace NextPassswordAPI.Controllers
         }
 
         [HttpPut()]
-        public async Task<IActionResult> UpdateItem(Guid id, [FromBody] Item item)
+        public async Task<IActionResult> UpdatePassword(Guid id, [FromBody] Password password)
         {
             try
             {
-                var updatedItemResult = await _itemService.UpdateItemAsync(item, id);
+                var updatedPasswordResult = await _passwordService.UpdatePasswordAsync(password, id);
 
-                if (updatedItemResult == null)
+                if (updatedPasswordResult == null)
                 {
                     return NotFound(); // 404 si le produit n'est pas trouvé
                 }
 
-                return Ok(updatedItemResult);
+                return Ok(updatedPasswordResult);
             }
             catch (Exception e)
             {

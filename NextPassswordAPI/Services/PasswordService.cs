@@ -7,20 +7,20 @@ using System.Security.Cryptography;
 
 namespace NextPassswordAPI.Services
 {
-    public class ItemService : IItemService
+    public class PasswordService : IPasswordService
     {
-        private readonly IItemRepository _itemRepository;
+        private readonly IPasswordRepository _passwordRepository;
 
-        public ItemService(IItemRepository itemRepository)
+        public PasswordService(IPasswordRepository passwordRepository)
         {
-            _itemRepository = itemRepository ?? throw new ArgumentNullException(nameof(itemRepository));
+            _passwordRepository = passwordRepository ?? throw new ArgumentNullException(nameof(passwordRepository));
         }
 
-        public async Task<List<Item>> GetAllItemAsync()
+        public async Task<List<Password>> GetAllPasswordAsync()
         {
             try
             {
-                return await _itemRepository.GetAllItemAsync();
+                return await _passwordRepository.GetAllPasswordAsync();
             }
             catch (Exception ex) { 
             
@@ -29,33 +29,33 @@ namespace NextPassswordAPI.Services
         }
 
 
-        public async Task AddItemAsync(ItemDto itemDto)
+        public async Task AddPasswordAsync(PasswordDto passwordDto)
         {
             try
             {
-                if (itemDto == null)
+                if (passwordDto == null)
                 {
-                    throw new ArgumentNullException(nameof(itemDto));
+                    throw new ArgumentNullException(nameof(passwordDto));
                 }
 
                 byte[] salt = RandomNumberGenerator.GetBytes(128 / 8); // divide by 8 to convert bits to bytes
                 string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
-                    password: itemDto?.PasswordHash!,
+                    password: passwordDto?.PasswordHash!,
                     salt: salt,
                     prf: KeyDerivationPrf.HMACSHA256,
                     iterationCount: 100000,
                     numBytesRequested: 256 / 8));
 
-                var item = new Item
+                var password = new Password
                 {
-                    Title = itemDto.Title,
-                    Notes = itemDto.Notes,
-                    Url = itemDto.Url,
-                    Username = itemDto.Username,
+                    Title = passwordDto.Title,
+                    Notes = passwordDto.Notes,
+                    Url = passwordDto.Url,
+                    Username = passwordDto.Username,
                     PasswordHash = hashed,
                 };
 
-                await _itemRepository.AddItemAsync(item);
+                await _passwordRepository.AddPasswordAsync(password);
 
             }
             catch (Exception ex)
@@ -65,11 +65,11 @@ namespace NextPassswordAPI.Services
         }
 
 
-        public async Task DeleteItemAsync(Guid id)
+        public async Task DeletePasswordAsync(Guid id)
         {
             try
             {
-                await _itemRepository.DeleteItemAsync(id);
+                await _passwordRepository.DeletePasswordAsync(id);
             }
             catch (Exception ex)
             {
@@ -77,11 +77,11 @@ namespace NextPassswordAPI.Services
             }
         }
 
-        public async Task<Item?> FindByIdAsync(Guid id)
+        public async Task<Password?> FindByIdAsync(Guid id)
         {
             try
             {
-                return await _itemRepository.FindByIdAsync(id)!;
+                return await _passwordRepository.FindByIdAsync(id)!;
             }
             catch (Exception ex)
             {
@@ -89,16 +89,16 @@ namespace NextPassswordAPI.Services
             }
         }
 
-        public Task<Item?> UpdateItemAsync(Item item, Guid id)
+        public Task<Password?> UpdatePasswordAsync(Password password, Guid id)
         {
             try
             {
-                if (item == null)
+                if (password == null)
                 {
-                    throw new ArgumentNullException(nameof(item));
+                    throw new ArgumentNullException(nameof(password));
                 }
 
-                return _itemRepository.UpdateItemAsync(item, id);
+                return _passwordRepository.UpdatePasswordAsync(password, id);
                     
 
 

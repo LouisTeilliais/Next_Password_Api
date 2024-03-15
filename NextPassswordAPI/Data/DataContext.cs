@@ -6,7 +6,7 @@ namespace NextPassswordAPI.Data
 {
     public class DataContext : IdentityDbContext
     {
-        public DbSet<Item> Items { get; set; }
+        public DbSet<Password> Passwords { get; set; }
         public DataContext(DbContextOptions<DataContext> options) : base(options) { }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

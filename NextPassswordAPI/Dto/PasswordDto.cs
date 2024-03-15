@@ -1,6 +1,6 @@
 ﻿namespace NextPassswordAPI.Dto
 {
-    public class ItemDto
+    public class PasswordDto
     {
         public string? Title { get; set; }
         public string? PasswordHash { get; set; }
