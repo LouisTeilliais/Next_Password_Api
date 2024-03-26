@@ -45,7 +45,7 @@ namespace NextPassswordAPI.Controllers
                     return BadRequest("Item is empty !");
                 }
 
-                await _passwordService.AddPasswordAsync(user.Id, passwordDto);
+                await _passwordService.AddPasswordAsync(user.Id, passwordDto, user.SecurityStamp);
                 return Ok();
 
             }

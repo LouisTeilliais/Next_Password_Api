@@ -100,7 +100,7 @@ namespace NextPassswordAPI.Services
                     throw new ArgumentNullException(nameof(passwordDto));
                 }
 
-                string hashed = HashPasswordWithStamp(passwordDto.PasswordHash, securityStamp);
+                string hashed = HashPasswordWithStamp(passwordDto.PasswordHash!, securityStamp);
 
                 Console.Write(hashed);
 
