@@ -98,14 +98,16 @@ namespace NextPassswordAPI.Controllers
         {
             try
             {
-                Password password = await _passwordService.FindByIdAsync(id);
+                var user = await _userManager.GetUserAsync(User);
+
+                Password password = await _passwordService.FindByIdAsync(user!.Id, id);
 
                 if (password == null)
                 {
                     return NotFound(); 
                 }
 
-                await _passwordService.DeletePasswordAsync(id);
+                await _passwordService.DeletePasswordAsync(user.Id, id);
 
                 return Ok("Le mot de passe à bien été supprimé");
             }

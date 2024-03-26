@@ -90,18 +90,18 @@ namespace NextPassswordAPI.Repository
                 }
 
                 updatedProduct.Title = password.Title;
-                updatedProduct.Url= password.Url;
+                updatedProduct.Url = password.Url;
                 updatedProduct.Username = password.Username;
                 updatedProduct.Notes = password.Notes;
                 updatedProduct.PasswordHash = password.PasswordHash;
 
-                _dataContext!.Entry(updatedProduct).State = Microsoft.EntityFrameworkCore.EntityState.Modified;
+                _dataContext!.Entry(updatedProduct).State = EntityState.Modified;
 
                 await _dataContext!.SaveChangesAsync();
 
                 return updatedProduct;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw new Exception($"Une erreur s'est produite lors de la récupération du mot de passe {id}. ", ex);
             }
