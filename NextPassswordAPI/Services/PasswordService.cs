@@ -4,6 +4,7 @@ using NextPassswordAPI.Models;
 using NextPassswordAPI.Repository.Interfaces;
 using NextPassswordAPI.Services.Interfaces;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace NextPassswordAPI.Services
 {
@@ -28,33 +29,68 @@ namespace NextPassswordAPI.Services
             }
         }
 
-/*        private const int SaltSize = 16;
+        /*        private const int SaltSize = 16;
 
-        private const int HashSize = 20;
-        public static string Hash(string password, int iterations)
+                private const int HashSize = 20;
+                public static string Hash(string password, int iterations)
+                {
+                    // Create salt
+                    byte[] salt;
+                    new RNGCryptoServiceProvider().GetBytes(salt = new byte[SaltSize]);
+
+                    // Create hash
+                    var pbkdf2 = new Rfc2898DeriveBytes(password, salt, iterations);
+                    var hash = pbkdf2.GetBytes(HashSize);
+
+                    // Combine salt and hash
+                    var hashBytes = new byte[SaltSize + HashSize];
+                    Array.Copy(salt, 0, hashBytes, 0, SaltSize);
+                    Array.Copy(hash, 0, hashBytes, SaltSize, HashSize);
+
+                    // Convert to base64
+                    var base64Hash = Convert.ToBase64String(hashBytes);
+
+                    // Format hash with extra information
+                    return string.Format("$MYHASH$V1${0}${1}", iterations, base64Hash);
+                }
+        */
+
+
+        /// <summary>
+        /// Hash Password with Security Stamp
+        /// </summary>
+        /// <param name="password"></param>
+        /// <param name="securityStamp"></param>
+        /// <returns></returns>
+        public static string HashPasswordWithStamp(string password, string securityStamp)
         {
-            // Create salt
-            byte[] salt;
-            new RNGCryptoServiceProvider().GetBytes(salt = new byte[SaltSize]);
+            using (SHA256 sha256Hash = SHA256.Create())
+            {
+                // Combine le mot de passe avec le security stamp
+                string combinedString = String.Concat(password, securityStamp);
 
-            // Create hash
-            var pbkdf2 = new Rfc2898DeriveBytes(password, salt, iterations);
-            var hash = pbkdf2.GetBytes(HashSize);
+                // Convertit la chaîne combinée en tableau de bytes
+                byte[] data = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(combinedString));
 
-            // Combine salt and hash
-            var hashBytes = new byte[SaltSize + HashSize];
-            Array.Copy(salt, 0, hashBytes, 0, SaltSize);
-            Array.Copy(hash, 0, hashBytes, SaltSize, HashSize);
-
-            // Convert to base64
-            var base64Hash = Convert.ToBase64String(hashBytes);
-
-            // Format hash with extra information
-            return string.Format("$MYHASH$V1${0}${1}", iterations, base64Hash);
+                // Crée une chaîne hexadécimale à partir des bytes hachés
+                StringBuilder stringBuilder = new StringBuilder();
+                for (int i = 0; i < data.Length; i++)
+                {
+                    stringBuilder.Append(data[i].ToString("x2"));
+                }
+                return stringBuilder.ToString();
+            }
         }
-*/
 
-
+        /// <summary>
+        /// Add Password hashed
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="passwordDto"></param>
+        /// <param name="securityStamp"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="Exception"></exception>
         public async Task AddPasswordAsync(string userId, PasswordDto passwordDto, string securityStamp)
         {
             try
@@ -64,8 +100,9 @@ namespace NextPassswordAPI.Services
                     throw new ArgumentNullException(nameof(passwordDto));
                 }
 
-                /*string hashed = Hash(securityStamp, 10);*/
+                string hashed = HashPasswordWithStamp(passwordDto.PasswordHash, securityStamp);
 
+                Console.Write(hashed);
 
                 /*byte[] salt = RandomNumberGenerator.GetBytes(128 / 8); // divide by 8 to convert bits to bytes
                 string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
