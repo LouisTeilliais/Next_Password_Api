@@ -10,6 +10,6 @@ namespace NextPassswordAPI.Repository.Interfaces
         Task<Password?> FindByIdAsync(string userId, Guid id);
         Task DeletePasswordAsync(string userId, Guid id);
 
-        Task<Password?> UpdatePasswordAsync(Password password, Guid id);
+        Task<Password?> UpdatePasswordAsync(Password password, Guid id, string userId);
     }
 }

@@ -77,33 +77,30 @@ namespace NextPassswordAPI.Repository
 
         }
 
-        public async Task<Password> UpdatePasswordAsync(Password password, Guid id)
+        public async Task<Password> UpdatePasswordAsync(Password password, Guid id, string userId)
         {
             try
             {
+                var existingPassword = await _dataContext.Passwords.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
 
-                var updatedProduct = await _dataContext!.Passwords.FindAsync(id);
-
-                if (updatedProduct == null)
+                if (existingPassword == null)
                 {
-                    throw new InvalidOperationException($"Le mot de passe n'a pas été trouvé.");
+                    throw new InvalidOperationException($"Le mot de passe à l'ID {id} n'est pas trouvé.");
                 }
 
-                updatedProduct.Title = password.Title;
-                updatedProduct.Url = password.Url;
-                updatedProduct.Username = password.Username;
-                updatedProduct.Notes = password.Notes;
-                updatedProduct.PasswordHash = password.PasswordHash;
+                existingPassword.Title = password.Title;
+                existingPassword.Url = password.Url;
+                existingPassword.Username = password.Username;
+                existingPassword.Notes = password.Notes;
+                existingPassword.PasswordHash = password.PasswordHash;
 
-                _dataContext!.Entry(updatedProduct).State = EntityState.Modified;
+                await _dataContext.SaveChangesAsync();
 
-                await _dataContext!.SaveChangesAsync();
-
-                return updatedProduct;
+                return existingPassword;
             }
             catch (Exception ex)
             {
-                throw new Exception($"Une erreur s'est produite lors de la récupération du mot de passe {id}. ", ex);
+                throw new Exception($"Une erreur s'est produite lors de la récupération ou de la mise à jour du mot de passe {id}. ", ex);
             }
         }
     }

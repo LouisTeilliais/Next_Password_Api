@@ -56,7 +56,7 @@ namespace NextPassswordAPI.Controllers
         }
 
         [HttpGet("{passwordId}")]
-        public async Task<IActionResult> GetPasswordById(Guid itemId)
+        public async Task<IActionResult> GetPasswordById(Guid passwordId)
         {
             try
             {
@@ -68,23 +68,14 @@ namespace NextPassswordAPI.Controllers
                 }
 
 
-                var item = await _passwordService.FindByIdAsync(user.Id, itemId);
+                var item = await _passwordService.FindByIdAsync(user.Id, passwordId);
 
                 if (item == null)
                 {
                     return NotFound(); // 404 si le produit n'est pas .
                 }
 
-                var passwordDto = new PasswordDto
-                {
-                    Title = item.Title,
-                    Notes = item.Notes,
-                    Url = item.Url,
-                    Username = item.Username,
-                    PasswordHash= item.PasswordHash
-                };
-
-                return Ok(passwordDto);
+                return Ok(item);
 
             }
             catch (Exception e)
@@ -93,21 +84,21 @@ namespace NextPassswordAPI.Controllers
             }
         }
 
-        [HttpDelete()]
-        public async Task<IActionResult> DeletePassword(Guid id)
+        [HttpDelete("{passwordId}")]
+        public async Task<IActionResult> DeletePassword(Guid passwordId)
         {
             try
             {
                 var user = await _userManager.GetUserAsync(User);
 
-                Password password = await _passwordService.FindByIdAsync(user!.Id, id);
+                Password password = await _passwordService.FindByIdAsync(user!.Id, passwordId);
 
                 if (password == null)
                 {
                     return NotFound(); 
                 }
 
-                await _passwordService.DeletePasswordAsync(user.Id, id);
+                await _passwordService.DeletePasswordAsync(user.Id, passwordId);
 
                 return Ok("Le mot de passe à bien été supprimé");
             }
@@ -117,12 +108,14 @@ namespace NextPassswordAPI.Controllers
             }
         }
 
-        [HttpPut()]
-        public async Task<IActionResult> UpdatePassword(Guid id, [FromBody] Password password)
+        [HttpPut("{passwordId}")]
+        public async Task<IActionResult> UpdatePassword(Guid passwordId, [FromBody] PasswordDto passwordDto)
         {
             try
             {
-                var updatedPasswordResult = await _passwordService.UpdatePasswordAsync(password, id);
+                var user = await _userManager.GetUserAsync(User);
+
+                var updatedPasswordResult = await _passwordService.UpdatePasswordAsync(passwordId, passwordDto, user.SecurityStamp, user.Id);
 
                 if (updatedPasswordResult == null)
                 {

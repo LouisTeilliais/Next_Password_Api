@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Cryptography.KeyDerivation;
+using Microsoft.AspNetCore.Identity;
 using NextPassswordAPI.Dto;
 using NextPassswordAPI.Models;
 using NextPassswordAPI.Repository.Interfaces;
@@ -11,10 +12,15 @@ namespace NextPassswordAPI.Services
     public class PasswordService : IPasswordService
     {
         private readonly IPasswordRepository _passwordRepository;
+        private readonly IHashPassword _hashPassword;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public PasswordService(IPasswordRepository passwordRepository)
+
+        public PasswordService(IPasswordRepository passwordRepository, IHashPassword hashPassword, UserManager<ApplicationUser> userManager)
         {
             _passwordRepository = passwordRepository ?? throw new ArgumentNullException(nameof(passwordRepository));
+            this._hashPassword = hashPassword;
+            _userManager = userManager;
         }
 
         public async Task<IEnumerable<Password>> GetAllPasswordByUserAsync(string userId)
@@ -29,58 +35,6 @@ namespace NextPassswordAPI.Services
             }
         }
 
-        /*        private const int SaltSize = 16;
-
-                private const int HashSize = 20;
-                public static string Hash(string password, int iterations)
-                {
-                    // Create salt
-                    byte[] salt;
-                    new RNGCryptoServiceProvider().GetBytes(salt = new byte[SaltSize]);
-
-                    // Create hash
-                    var pbkdf2 = new Rfc2898DeriveBytes(password, salt, iterations);
-                    var hash = pbkdf2.GetBytes(HashSize);
-
-                    // Combine salt and hash
-                    var hashBytes = new byte[SaltSize + HashSize];
-                    Array.Copy(salt, 0, hashBytes, 0, SaltSize);
-                    Array.Copy(hash, 0, hashBytes, SaltSize, HashSize);
-
-                    // Convert to base64
-                    var base64Hash = Convert.ToBase64String(hashBytes);
-
-                    // Format hash with extra information
-                    return string.Format("$MYHASH$V1${0}${1}", iterations, base64Hash);
-                }
-        */
-
-
-        /// <summary>
-        /// Hash Password with Security Stamp
-        /// </summary>
-        /// <param name="password"></param>
-        /// <param name="securityStamp"></param>
-        /// <returns></returns>
-        public static string HashPasswordWithStamp(string password, string securityStamp)
-        {
-            using (SHA256 sha256Hash = SHA256.Create())
-            {
-                // Combine le mot de passe avec le security stamp
-                string combinedString = String.Concat(password, securityStamp);
-
-                // Convertit la chaîne combinée en tableau de bytes
-                byte[] data = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(combinedString));
-
-                // Crée une chaîne hexadécimale à partir des bytes hachés
-                StringBuilder stringBuilder = new StringBuilder();
-                for (int i = 0; i < data.Length; i++)
-                {
-                    stringBuilder.Append(data[i].ToString("x2"));
-                }
-                return stringBuilder.ToString();
-            }
-        }
 
         /// <summary>
         /// Add Password hashed
@@ -93,25 +47,15 @@ namespace NextPassswordAPI.Services
         /// <exception cref="Exception"></exception>
         public async Task AddPasswordAsync(string userId, PasswordDto passwordDto, string securityStamp)
         {
-            try
-            {
+            try { 
+            
                 if (passwordDto == null)
                 {
                     throw new ArgumentNullException(nameof(passwordDto));
                 }
 
-                string hashed = HashPasswordWithStamp(passwordDto.PasswordHash!, securityStamp);
+                string hashed = _hashPassword.HashPasswordWithUniqueSalt(passwordDto.PasswordHash!, securityStamp);
 
-                Console.Write(hashed);
-
-                /*byte[] salt = RandomNumberGenerator.GetBytes(128 / 8); // divide by 8 to convert bits to bytes
-                string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
-                    password: passwordDto?.PasswordHash!,
-                    salt: salt,
-                    prf: KeyDerivationPrf.HMACSHA256,
-                    iterationCount: 100000,
-                    numBytesRequested: 256 / 8));
-*/
                 var password = new Password
                 {
                     Title = passwordDto!.Title,
@@ -132,7 +76,13 @@ namespace NextPassswordAPI.Services
             }
         }
 
-
+        /// <summary>
+        /// Delete Password
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         public async Task DeletePasswordAsync(string userId, Guid id)
         {
             try
@@ -145,6 +95,13 @@ namespace NextPassswordAPI.Services
             }
         }
 
+        /// <summary>
+        /// Find Password by Id
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         public async Task<Password?> FindByIdAsync(string userId, Guid id)
         {
             try
@@ -157,20 +114,38 @@ namespace NextPassswordAPI.Services
             }
         }
 
-        public Task<Password?> UpdatePasswordAsync(Password password, Guid id)
+        /// <summary>
+        /// Update Password
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="passwordDto"></param>
+        /// <param name="securityStamp"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        /// <exception cref="Exception"></exception>
+        public Task<Password?> UpdatePasswordAsync(Guid id, PasswordDto passwordDto, string securityStamp, string userId)
         {
             try
             {
-                if (password == null)
+                if (passwordDto == null)
                 {
-                    throw new ArgumentNullException(nameof(password));
+                    throw new ArgumentNullException(nameof(passwordDto));
                 }
 
-                return _passwordRepository.UpdatePasswordAsync(password, id);
-                    
+                string hashed = _hashPassword.HashPasswordWithUniqueSalt(passwordDto.PasswordHash!, securityStamp);
 
+                var password = new Password
+                {
+                    Title = passwordDto.Title,
+                    Notes = passwordDto.Notes,
+                    Url = passwordDto.Url,
+                    Username = passwordDto.Username,
+                    PasswordHash = hashed
+                };
 
-            }catch (Exception ex)
+                return _passwordRepository.UpdatePasswordAsync(password, id, userId);
+            }
+            catch (Exception ex)
             {
                 throw new Exception("Une erreur s'est produite lors de la mise à jour du mot de passe.", ex);
             }

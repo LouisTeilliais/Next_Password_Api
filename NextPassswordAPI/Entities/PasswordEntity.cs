@@ -16,8 +16,8 @@ namespace NextPassswordAPI.Entities
         [Column(name: "title")]
         public string? Title{ get; set; }
 
-        [Column(name: "passwordHash")]
-        public string? PasswordHash { get; set; }
+        [Column(name: "password")]
+        public string? Password { get; set; }
 
         [Column(name: "notes")]
         public string? Notes { get; set; }

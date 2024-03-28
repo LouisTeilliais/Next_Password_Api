@@ -1,10 +1,4 @@
-using AspNet.Security.OAuth.Validation;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using NextPassswordAPI.Data;
 using NextPassswordAPI.Models;
@@ -13,7 +7,6 @@ using NextPassswordAPI.Repository.Interfaces;
 using NextPassswordAPI.Services;
 using NextPassswordAPI.Services.Interfaces;
 using Swashbuckle.AspNetCore.Filters;
-using System.Text;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -79,6 +72,7 @@ builder.Services.AddDefaultIdentity<ApplicationUser> ()
 
 /* Services */
 builder.Services.AddScoped<IPasswordService, PasswordService>();
+builder.Services.AddScoped<IHashPassword, HashPasswordService>();
 
 /* Repositories */
 builder.Services.AddScoped<IPasswordRepository, PasswordRepository>();
