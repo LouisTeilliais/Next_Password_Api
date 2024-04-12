@@ -4,6 +4,6 @@ namespace NextPassswordAPI.Models
 {
     public class ApplicationUser : IdentityUser
     {
-        public ICollection<Password> Passwords { get; set; }
+        public ICollection<Password>? Passwords { get; set; }
     }
 }

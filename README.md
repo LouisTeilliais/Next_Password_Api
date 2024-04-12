@@ -26,3 +26,14 @@ Once migrations are done, to create an API Route follow this :
 3. Create an Iterface Service
 4. Create a Service
 5. Create a Controller
+
+
+## TODO 
+
+[x] Créer Table Token et ajouter à chaque création un temps de mdp 
+
+[] Bug sur la FK côté Password
+[] Change to Entity => plus propre 
+[] Créer middleware pour check si le token est toujours valide
+    SI il est toujours valide, laisser voir le mot de passe
+    SINON, refaire un token pour voir le mot de passe et le déhasher

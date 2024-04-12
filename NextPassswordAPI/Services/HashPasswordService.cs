@@ -1,61 +1,118 @@
-﻿using NextPassswordAPI.Services.Interfaces;
+﻿using Newtonsoft.Json.Linq;
+using NextPassswordAPI.Services.Interfaces;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace NextPassswordAPI.Services
 {
-    public class HashPasswordService : IHashPassword
+    public class HashPasswordService : IHashPasswordService
     {
-
         /// <summary>
-        /// Hash Password with Security Stamp
+        /// Generate a unique token
         /// </summary>
-        /// <param name="password"></param>
-        /// <param name="securityStamp"></param>
+        /// <param name="length"></param>
         /// <returns></returns>
-        public string HashPasswordWithUniqueSalt(string password, string securityStamp)
+        public string GenerateToken(int length = 32)
         {
-            using (SHA256 sha256Hash = SHA256.Create())
+            const string allowedChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            byte[] randomNumber = new byte[length];
+            using (var rng = RandomNumberGenerator.Create())
             {
-                // Générer un sel unique
-                string uniqueSalt = Guid.NewGuid().ToString();
-
-                // Combinez le mot de passe avec le security stamp et le sel unique
-                string combinedString = String.Concat(password, securityStamp, uniqueSalt);
-
-                // Convertit la chaîne combinée en tableau de bytes
-                byte[] data = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(combinedString));
-
-                // Crée une chaîne hexadécimale à partir des bytes hachés
-                StringBuilder stringBuilder = new StringBuilder();
-                for (int i = 0; i < data.Length; i++)
+                rng.GetBytes(randomNumber);
+                char[] chars = new char[length];
+                for (int i = 0; i < length; i++)
                 {
-                    stringBuilder.Append(data[i].ToString("x2"));
+                    chars[i] = allowedChars[randomNumber[i] % allowedChars.Length];
                 }
-                return stringBuilder.ToString();
+                return new string(chars);
             }
         }
 
-        /// <summary>
-        /// Verify Password
-        /// </summary>
-        /// <param name="enteredPassword"></param>
-        /// <param name="storedHash"></param>
-        /// <param name="securityStamp"></param>
-        /// <returns></returns>
-        public bool VerifyPassword(string enteredPassword, string storedHash, string securityStamp)
+        public string EncryptPassword(string password, string token)
         {
-            // Récupérer le sel utilisé lors du hachage
-            int saltLength = Guid.NewGuid().ToString().Length; // Longueur du sel généré par Guid.NewGuid()
-            string salt = storedHash.Substring(storedHash.Length - saltLength);
+            byte[] iv = new byte[16];
+            byte[] array;
 
-            // Recalculer le hachage du mot de passe fourni avec le même sel et le même security stamp
-            string hashedEnteredPassword = HashPasswordWithUniqueSalt(enteredPassword, securityStamp + salt);
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = GetAesCompatibleKey(token, aes.KeySize / 8); // Get a compatible key
+                aes.IV = iv;
 
-            // Comparer le hachage calculé avec le hachage stocké
-            return string.Equals(storedHash, hashedEnteredPassword);
+                ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
+
+                using (MemoryStream memoryStream = new MemoryStream())
+                {
+                    using (CryptoStream cryptoStream = new CryptoStream(memoryStream, encryptor, CryptoStreamMode.Write))
+                    {
+                        using (StreamWriter streamWriter = new StreamWriter(cryptoStream))
+                        {
+                            streamWriter.Write(password);
+                        }
+
+                        array = memoryStream.ToArray();
+                    }
+                }
+            }
+            return Convert.ToBase64String(array);
         }
 
+        public string DecryptPassword(string encryptedPassword, string token)
+        {
+            byte[] iv = new byte[16];
+            byte[] buffer = Convert.FromBase64String(encryptedPassword);
 
-    }
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = GetAesCompatibleKey(token, aes.KeySize / 8); // Get a compatible key
+                aes.IV = iv;
+
+                ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
+
+                using (MemoryStream memoryStream = new MemoryStream(buffer))
+                {
+                    using (CryptoStream cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read))
+                    {
+                        using (StreamReader streamReader = new StreamReader(cryptoStream))
+                        {
+                            return streamReader.ReadToEnd();
+                        }
+                    }
+                }
+            }
+        }
+
+        private byte[] GetAesCompatibleKey(string token, int keySize)
+        {
+            using (var sha256 = SHA256.Create())
+            {
+                byte[] key = sha256.ComputeHash(Encoding.UTF8.GetBytes(token));
+                Array.Resize(ref key, keySize);
+                return key;
+            }
+        }
+
+       /* public static string DecryptString(string key, string cipherText)
+        {
+            byte[] iv = new byte[16];
+            byte[] buffer = Convert.FromBase64String(cipherText);
+
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = Encoding.UTF8.GetBytes(key);
+                aes.IV = iv;
+                ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
+
+                using (MemoryStream memoryStream = new MemoryStream(buffer))
+                {
+                    using (CryptoStream cryptoStream = new CryptoStream((Stream)memoryStream, decryptor, CryptoStreamMode.Read))
+                    {
+                        using (StreamReader streamReader = new StreamReader((Stream)cryptoStream))
+                        {
+                            return streamReader.ReadToEnd();
+                        }
+                    }
+                }
+            }
+        }*/
+    } 
 }

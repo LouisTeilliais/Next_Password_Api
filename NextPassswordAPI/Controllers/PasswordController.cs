@@ -3,21 +3,26 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using NextPassswordAPI.Dto;
 using NextPassswordAPI.Models;
+using NextPassswordAPI.Repository.Interfaces;
 using NextPassswordAPI.Services.Interfaces;
 
 namespace NextPassswordAPI.Controllers
 {
     [ApiController]
-    [Route("api/password"), Authorize]
+    [Route("api/password")]
     public class PasswordController : ControllerBase
     {
         public readonly IPasswordService _passwordService;
+        private readonly IHashPasswordService _hashPasswordService;
+        private readonly ITokenService _tokenService;
         private readonly UserManager<ApplicationUser> _userManager;
 
-        public PasswordController(UserManager<ApplicationUser> userManager, IPasswordService passwordService)
+        public PasswordController(UserManager<ApplicationUser> userManager, IPasswordService passwordService, IHashPasswordService hashPasswordService, ITokenService tokenService)
         {
             _userManager = userManager;
             _passwordService = passwordService;
+            _hashPasswordService = hashPasswordService;
+            _tokenService = tokenService;
         }
 
         [HttpGet()]
@@ -42,12 +47,11 @@ namespace NextPassswordAPI.Controllers
 
                 if (passwordDto == null)
                 {
-                    return BadRequest("Item is empty !");
+                    return BadRequest("Password is empty !");
                 }
 
-                await _passwordService.AddPasswordAsync(user.Id, passwordDto, user.SecurityStamp);
-                return Ok();
-
+                await _passwordService.AddPasswordAsync(user.Id, passwordDto);
+                return Ok("Mot de passe ajouté avec succès.");
             }
             catch (Exception e)
             {
@@ -69,6 +73,12 @@ namespace NextPassswordAPI.Controllers
 
 
                 var item = await _passwordService.FindByIdAsync(user.Id, passwordId);
+
+                var token = await _tokenService.FindByIdAsync(item.TokenId);
+
+
+                var password = _hashPasswordService.DecryptPassword(item.PasswordHash, token.TokenValue);
+
 
                 if (item == null)
                 {

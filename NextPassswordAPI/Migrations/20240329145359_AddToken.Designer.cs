@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NextPassswordAPI.Data;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NextPassswordAPI.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20240329145359_AddToken")]
+    partial class AddToken
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -228,23 +231,17 @@ namespace NextPassswordAPI.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
                     b.Property<string>("Notes")
                         .HasColumnType("text");
 
                     b.Property<string>("PasswordHash")
                         .HasColumnType("text");
 
-                    b.Property<string>("Title")
+                    b.Property<string>("PasswordToken")
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("TokenId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<string>("Title")
+                        .HasColumnType("text");
 
                     b.Property<string>("Url")
                         .HasColumnType("text");
@@ -260,32 +257,6 @@ namespace NextPassswordAPI.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Passwords");
-                });
-
-            modelBuilder.Entity("NextPassswordAPI.Models.Token", b =>
-                {
-                    b.Property<Guid?>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("PasswordId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("TokenValue")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PasswordId")
-                        .IsUnique();
-
-                    b.ToTable("Tokens");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -348,23 +319,9 @@ namespace NextPassswordAPI.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("NextPassswordAPI.Models.Token", b =>
-                {
-                    b.HasOne("NextPassswordAPI.Models.Password", "Password")
-                        .WithOne("Token")
-                        .HasForeignKey("NextPassswordAPI.Models.Token", "PasswordId");
-
-                    b.Navigation("Password");
-                });
-
             modelBuilder.Entity("NextPassswordAPI.Models.ApplicationUser", b =>
                 {
                     b.Navigation("Passwords");
-                });
-
-            modelBuilder.Entity("NextPassswordAPI.Models.Password", b =>
-                {
-                    b.Navigation("Token");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,28 +1,33 @@
 ﻿using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Identity;
+using NextPassswordAPI.Data;
 using NextPassswordAPI.Dto;
 using NextPassswordAPI.Models;
 using NextPassswordAPI.Repository.Interfaces;
 using NextPassswordAPI.Services.Interfaces;
-using System.Security.Cryptography;
-using System.Text;
-
 namespace NextPassswordAPI.Services
 {
     public class PasswordService : IPasswordService
     {
         private readonly IPasswordRepository _passwordRepository;
-        private readonly IHashPassword _hashPassword;
+        private readonly ITokenRepository _tokenRepository;
+        private readonly IHashPasswordService _hashPasswordService;
         private readonly UserManager<ApplicationUser> _userManager;
 
-
-        public PasswordService(IPasswordRepository passwordRepository, IHashPassword hashPassword, UserManager<ApplicationUser> userManager)
+        public PasswordService(IPasswordRepository passwordRepository, IHashPasswordService hashPassword, UserManager<ApplicationUser> userManager, ITokenRepository tokenRepository)
         {
             _passwordRepository = passwordRepository ?? throw new ArgumentNullException(nameof(passwordRepository));
-            this._hashPassword = hashPassword;
+            this._hashPasswordService = hashPassword;
             _userManager = userManager;
+            _tokenRepository = tokenRepository;
         }
 
+        /// <summary>
+        /// Get all password by user
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         public async Task<IEnumerable<Password>> GetAllPasswordByUserAsync(string userId)
         {
             try
@@ -41,21 +46,25 @@ namespace NextPassswordAPI.Services
         /// </summary>
         /// <param name="userId"></param>
         /// <param name="passwordDto"></param>
-        /// <param name="securityStamp"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="Exception"></exception>
-        public async Task AddPasswordAsync(string userId, PasswordDto passwordDto, string securityStamp)
+        public async Task AddPasswordAsync(string userId, PasswordDto passwordDto)
         {
-            try { 
-            
+            try
+            {
                 if (passwordDto == null)
                 {
                     throw new ArgumentNullException(nameof(passwordDto));
                 }
 
-                string hashed = _hashPassword.HashPasswordWithUniqueSalt(passwordDto.PasswordHash!, securityStamp);
+                // Generate a unique token value
+                string tokenValue = _hashPasswordService.GenerateToken();
 
+                // Create a new Token entity
+                string hashed = _hashPasswordService.EncryptPassword(passwordDto.PasswordHash!, tokenValue);
+
+                // Create a new Password entity
                 var password = new Password
                 {
                     Title = passwordDto!.Title,
@@ -63,12 +72,30 @@ namespace NextPassswordAPI.Services
                     Url = passwordDto.Url,
                     Username = passwordDto.Username,
                     PasswordHash = hashed,
-                    UserId= userId
-                    
+                    UserId = userId,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
                 };
 
                 await _passwordRepository.AddPasswordAsync(password);
 
+                // Récupère l'ID généré du mot de passe
+                Guid passwordId = password.Id;
+
+                var token = new Token
+                {
+                    TokenValue = tokenValue,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    PasswordId = passwordId
+                };
+
+                await _tokenRepository.AddTokenAsync(token);
+
+                // Met à jour le mot de passe avec l'ID du token
+                password.TokenId = token.Id;
+
+                await _passwordRepository.UpdatePasswordAsync(password, password.Id, userId);
             }
             catch (Exception ex)
             {
@@ -132,7 +159,7 @@ namespace NextPassswordAPI.Services
                     throw new ArgumentNullException(nameof(passwordDto));
                 }
 
-                string hashed = _hashPassword.HashPasswordWithUniqueSalt(passwordDto.PasswordHash!, securityStamp);
+                string hashed = _hashPasswordService.EncryptPassword(passwordDto.PasswordHash!, securityStamp);
 
                 var password = new Password
                 {
@@ -140,7 +167,8 @@ namespace NextPassswordAPI.Services
                     Notes = passwordDto.Notes,
                     Url = passwordDto.Url,
                     Username = passwordDto.Username,
-                    PasswordHash = hashed
+                    PasswordHash = hashed,
+                    UpdatedAt = DateTime.UtcNow
                 };
 
                 return _passwordRepository.UpdatePasswordAsync(password, id, userId);

@@ -34,7 +34,6 @@ namespace NextPassswordAPI.Repository
             {
                 _dataContext!.Passwords.Add(password);
                 await _dataContext.SaveChangesAsync();
-
             }
             catch (Exception ex)
             {
@@ -81,7 +80,7 @@ namespace NextPassswordAPI.Repository
         {
             try
             {
-                var existingPassword = await _dataContext.Passwords.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
+                var existingPassword = await _dataContext!.Passwords.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
 
                 if (existingPassword == null)
                 {

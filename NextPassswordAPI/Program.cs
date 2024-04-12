@@ -72,10 +72,13 @@ builder.Services.AddDefaultIdentity<ApplicationUser> ()
 
 /* Services */
 builder.Services.AddScoped<IPasswordService, PasswordService>();
-builder.Services.AddScoped<IHashPassword, HashPasswordService>();
+builder.Services.AddScoped<IHashPasswordService, HashPasswordService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
 
 /* Repositories */
 builder.Services.AddScoped<IPasswordRepository, PasswordRepository>();
+builder.Services.AddScoped<ITokenRepository, TokenRepository>();
+/*builder.Services.AddScoped<I>*/
 
 var app = builder.Build();
 
