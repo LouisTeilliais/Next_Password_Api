@@ -8,5 +8,7 @@ namespace NextPassswordAPI.Repository.Interfaces
 
         Task<Token?> GetTokenById(Guid? id);
 
+        Task<Token?> UpdateToken(Token token);
+
     }
 }

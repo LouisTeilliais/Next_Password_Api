@@ -27,6 +27,33 @@ namespace NextPassswordAPI.Repository
             }
         }
 
+        public async Task<Password?> FindByUserIdAsync(string userId, Guid id)
+        {
+            try
+            {
+                return await _dataContext!.Passwords.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Une erreur s'est produite lors de la récupération du mot de passe {id}. ", ex);
+            }
+
+        }
+
+        public async Task<Password?> FindByIdAsync(Guid id)
+        {
+            try
+            {
+                return await _dataContext!.Passwords.FirstOrDefaultAsync(p => p.Id == id);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Une erreur s'est produite lors de la récupération du mot de passe {id}. ", ex);
+            }
+
+        }
+
+
         public async Task AddPasswordAsync(Password password)
         {
 
@@ -41,39 +68,6 @@ namespace NextPassswordAPI.Repository
                     throw new Exception("Une erreur s'est produite lors de l'ajout du mot de passe.", ex);
                 }
             }
-        }
-
-        public async Task DeletePasswordAsync(string userId, Guid id)
-        {
-            try
-            {
-                var password = await _dataContext!.Passwords.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
-
-                if (password == null)
-                {
-                    throw new InvalidOperationException($"Le mot de passe à l'ID {password?.Id} n'est pas trouvé.");
-                }
-
-                _dataContext!.Passwords.Remove(password);
-                await _dataContext!.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("An error occurred while deleting the product.", ex);
-            }
-        }
-
-        public async Task<Password?> FindByIdAsync(string userId, Guid id)
-        {
-            try
-            {
-                return await _dataContext!.Passwords.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Une erreur s'est produite lors de la récupération du mot de passe {id}. ", ex);
-            }
-
         }
 
         public async Task<Password> UpdatePasswordAsync(Password password, Guid id, string userId)
@@ -102,5 +96,50 @@ namespace NextPassswordAPI.Repository
                 throw new Exception($"Une erreur s'est produite lors de la récupération ou de la mise à jour du mot de passe {id}. ", ex);
             }
         }
+
+        public async Task<Password> UpdatePasswordTokenAsync(Password password)
+        {
+            try
+            {
+                var existingPassword = await _dataContext!.Passwords.FirstOrDefaultAsync(p => p.Id == password.Id);
+
+                if (existingPassword == null)
+                {
+                    throw new InvalidOperationException($"Le mot de passe avec l'ID {password.Id} n'a pas été trouvé.");
+                }
+
+                existingPassword.PasswordHash = password.PasswordHash;
+                existingPassword.TokenId = password.TokenId;
+
+                await _dataContext.SaveChangesAsync();
+
+                return existingPassword;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Une erreur s'est produite lors de la récupération ou de la mise à jour du mot de passe {password.Id}.", ex);
+            }
+        }
+
+        public async Task DeletePasswordAsync(string userId, Guid id)
+        {
+            try
+            {
+                var password = await _dataContext!.Passwords.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
+
+                if (password == null)
+                {
+                    throw new InvalidOperationException($"Le mot de passe à l'ID {password?.Id} n'est pas trouvé.");
+                }
+
+                _dataContext!.Passwords.Remove(password);
+                await _dataContext!.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("An error occurred while deleting the product.", ex);
+            }
+        }
+
     }
 }

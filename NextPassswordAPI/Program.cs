@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using NextPassswordAPI.Data;
+using NextPassswordAPI.Middlewares;
 using NextPassswordAPI.Models;
 using NextPassswordAPI.Repository;
 using NextPassswordAPI.Repository.Interfaces;
@@ -43,11 +44,11 @@ builder.Services.AddAuthentication(options =>
     options.DefaultAuthenticateScheme = "Identity.Bearer";
     options.DefaultChallengeScheme = "Identity.Bearer";
 })
-   .AddCookie("Identity.Bearer", options =>
-   {
-       options.Cookie.Name = "access_token";
-       options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
-   });
+.AddCookie("Identity.Bearer", options =>
+{
+    options.Cookie.Name = "access_token";
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
+});
 
 builder.Services.AddControllers().AddJsonOptions(x =>
                 x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
@@ -78,9 +79,21 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 /* Repositories */
 builder.Services.AddScoped<IPasswordRepository, PasswordRepository>();
 builder.Services.AddScoped<ITokenRepository, TokenRepository>();
-/*builder.Services.AddScoped<I>*/
 
 var app = builder.Build();
+
+// Résolvez les services
+var serviceProvider = builder.Services.BuildServiceProvider();
+
+// Ajoutez le middleware en lui fournissant une instance résolue du service IPasswordService
+app.UseMiddleware<TokenMiddleware>(
+        serviceProvider.GetRequiredService<IPasswordService>(),
+        serviceProvider.GetRequiredService<ITokenService>(),
+        serviceProvider.GetRequiredService<IHashPasswordService>(),
+        serviceProvider.GetRequiredService<IPasswordRepository>(),
+        serviceProvider.GetRequiredService<ITokenRepository>()
+
+);
 
 
 // Configure the HTTP request pipeline.

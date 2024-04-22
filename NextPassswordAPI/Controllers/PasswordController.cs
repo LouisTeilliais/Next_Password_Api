@@ -71,26 +71,17 @@ namespace NextPassswordAPI.Controllers
                     return NotFound(); // User not found or not authenticated
                 }
 
-
-                var item = await _passwordService.FindByIdAsync(user.Id, passwordId);
-
-                var token = await _tokenService.FindByIdAsync(item.TokenId);
-
-
-                var password = _hashPasswordService.DecryptPassword(item.PasswordHash, token.TokenValue);
-
-
-                if (item == null)
-                {
-                    return NotFound(); // 404 si le produit n'est pas .
-                }
+                var item = await _passwordService.GetPasswordByUserIdAsync(user.Id, passwordId);
 
                 return Ok(item);
-
+            }
+            catch (NotFoundException ex)
+            {
+                return NotFound(ex.Message);
             }
             catch (Exception e)
             {
-                throw new Exception("Le mot de passe que vous cherchez n'éxiste pas", e);
+                throw new Exception("Une erreur s'est produite lors de la récupération du mot de passe.", e);
             }
         }
 
@@ -101,7 +92,7 @@ namespace NextPassswordAPI.Controllers
             {
                 var user = await _userManager.GetUserAsync(User);
 
-                Password password = await _passwordService.FindByIdAsync(user!.Id, passwordId);
+                Password password = await _passwordService.GetPasswordByUserIdAsync(user!.Id, passwordId);
 
                 if (password == null)
                 {
@@ -125,7 +116,7 @@ namespace NextPassswordAPI.Controllers
             {
                 var user = await _userManager.GetUserAsync(User);
 
-                var updatedPasswordResult = await _passwordService.UpdatePasswordAsync(passwordId, passwordDto, user.SecurityStamp, user.Id);
+                var updatedPasswordResult = await _passwordService.UpdatePasswordAsync(passwordId, passwordDto, user.Id);
 
                 if (updatedPasswordResult == null)
                 {

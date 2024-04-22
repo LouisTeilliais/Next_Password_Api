@@ -1,10 +1,36 @@
 # Next Password API 
 
-To launch project : 
+## How to launch project : 
+
+### Lauch database 
+
+To launch the database you have to get [Docker](https://docs.docker.com/desktop/install/windows-install/), because our DB is Dockerize. 
+
+Once it's done, go to the root of NextPasswordApi & run : 
+
+````
+docker compose up
+````
+
+Wait few seconds and the database is up ! 
+
+### Run migrations 
+
+Now to get the last version of database you have to run migrations : 
+
+Update database 
+
+````
+dotnet ef database update
+````
+
+Now you get all the element to lauch the backen of Next Password, to launch the API execute this : 
 
 ````
 dotnet build 
 ````
+
+## How to work on the project
 
 Create Entities in the entity folder to run migrations, ⚠️don't forget to update your DataContext with your Model ⚠️
 
@@ -14,12 +40,7 @@ Init migrations
 dotnet ef migrations add <NameOfMigrations>
 ```` 
 
-Update database 
-
-````
-dotnet ef database update
-````
-Once migrations are done, to create an API Route follow this : 
+Once migrations are done, to create an API road follow this : 
 
 1. Create an Iterface Repository
 2. Create a Repository
@@ -30,10 +51,5 @@ Once migrations are done, to create an API Route follow this :
 
 ## TODO 
 
-[x] Créer Table Token et ajouter à chaque création un temps de mdp 
+[] Bug sur le Get all password 
 
-[] Bug sur la FK côté Password
-[] Change to Entity => plus propre 
-[] Créer middleware pour check si le token est toujours valide
-    SI il est toujours valide, laisser voir le mot de passe
-    SINON, refaire un token pour voir le mot de passe et le déhasher

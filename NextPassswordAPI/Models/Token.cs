@@ -12,8 +12,7 @@
             public Guid? PasswordId { get; set; }
             public Password Password { get; set; }
 
-            /*public int? numberUses { get; set; }*/
-
+            public int? NumberUses { get; set; }
 
             public DateTime? CreatedAt { get; set; }
             public DateTime? UpdatedAt { get; set; }

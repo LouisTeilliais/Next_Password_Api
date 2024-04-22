@@ -2,9 +2,11 @@
 using Microsoft.AspNetCore.Identity;
 using NextPassswordAPI.Data;
 using NextPassswordAPI.Dto;
+using NextPassswordAPI.Migrations;
 using NextPassswordAPI.Models;
 using NextPassswordAPI.Repository.Interfaces;
 using NextPassswordAPI.Services.Interfaces;
+using System.Collections.Generic;
 namespace NextPassswordAPI.Services
 {
     public class PasswordService : IPasswordService
@@ -12,14 +14,21 @@ namespace NextPassswordAPI.Services
         private readonly IPasswordRepository _passwordRepository;
         private readonly ITokenRepository _tokenRepository;
         private readonly IHashPasswordService _hashPasswordService;
+        private readonly ITokenService _tokenService;
         private readonly UserManager<ApplicationUser> _userManager;
 
-        public PasswordService(IPasswordRepository passwordRepository, IHashPasswordService hashPassword, UserManager<ApplicationUser> userManager, ITokenRepository tokenRepository)
+        public PasswordService(
+            IPasswordRepository passwordRepository,
+            IHashPasswordService hashPassword,
+            UserManager<ApplicationUser> userManager,
+            ITokenRepository tokenRepository,
+            ITokenService tokenService)
         {
             _passwordRepository = passwordRepository ?? throw new ArgumentNullException(nameof(passwordRepository));
             this._hashPasswordService = hashPassword;
             _userManager = userManager;
             _tokenRepository = tokenRepository;
+            _tokenService = tokenService;
         }
 
         /// <summary>
@@ -34,15 +43,17 @@ namespace NextPassswordAPI.Services
             {
                 return await _passwordRepository.GetAllPasswordByUserAsync(userId);
             }
-            catch (Exception ex) { 
-            
+            catch (Exception ex)
+            {
+
                 throw new Exception($"Une erreur s'est produite lors de la récupération des mots de passe. ", ex);
             }
         }
 
+     
 
         /// <summary>
-        /// Add Password hashed
+        /// Add Password encypted
         /// </summary>
         /// <param name="userId"></param>
         /// <param name="passwordDto"></param>
@@ -87,7 +98,8 @@ namespace NextPassswordAPI.Services
                     TokenValue = tokenValue,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow,
-                    PasswordId = passwordId
+                    PasswordId = passwordId,
+                    NumberUses = 3
                 };
 
                 await _tokenRepository.AddTokenAsync(token);
@@ -123,23 +135,49 @@ namespace NextPassswordAPI.Services
         }
 
         /// <summary>
-        /// Find Password by Id
+        /// Get Password By Id Async
         /// </summary>
         /// <param name="userId"></param>
-        /// <param name="id"></param>
+        /// <param name="passwordId"></param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public async Task<Password?> FindByIdAsync(string userId, Guid id)
+        public async Task<Password?> GetPasswordByUserIdAsync(string userId, Guid passwordId)
         {
             try
             {
-                return await _passwordRepository.FindByIdAsync(userId, id)!;
+                var item = await _passwordRepository.FindByUserIdAsync(userId, passwordId);
+
+                if (item == null)
+                {
+                    throw new Exception($"Le mot de passe avec l'ID {passwordId} n'a pas été trouvé.");
+                }
+
+                var token = await _tokenService.FindByIdAsync(item.TokenId);
+
+                if (token == null)
+                {
+                    throw new Exception("Une erreur est survenue");
+                }
+
+               /* var password = _hashPasswordService.DecryptPassword(item.PasswordHash, token.TokenValue);*/
+
+                var password = new Password
+                {
+                    Id = item.Id,
+                    PasswordHash = item.PasswordHash,
+                    Notes = item.Notes,
+                    Url = item.Url,
+                    Token = token
+                };
+
+                return password;
             }
             catch (Exception ex)
             {
-                throw new Exception($"Une erreur s'est produite lors de la récupération du mot de passe: {id}. ", ex);
+                throw new Exception($"Une erreur s'est produite lors de la récupération du mot de passe: {passwordId}. ", ex);
             }
         }
+
 
         /// <summary>
         /// Update Password
@@ -150,7 +188,7 @@ namespace NextPassswordAPI.Services
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
         /// <exception cref="Exception"></exception>
-        public Task<Password?> UpdatePasswordAsync(Guid id, PasswordDto passwordDto, string securityStamp, string userId)
+        public async Task<Password?> UpdatePasswordAsync(Guid passwordId, PasswordDto passwordDto, string userId)
         {
             try
             {
@@ -159,23 +197,106 @@ namespace NextPassswordAPI.Services
                     throw new ArgumentNullException(nameof(passwordDto));
                 }
 
-                string hashed = _hashPasswordService.EncryptPassword(passwordDto.PasswordHash!, securityStamp);
+                var password = await this.GetPasswordByIdAsync(passwordId);
 
-                var password = new Password
+                var token = await _tokenService.FindByIdAsync(password!.TokenId);
+
+                if (token == null)
                 {
-                    Title = passwordDto.Title,
-                    Notes = passwordDto.Notes,
-                    Url = passwordDto.Url,
-                    Username = passwordDto.Username,
-                    PasswordHash = hashed,
-                    UpdatedAt = DateTime.UtcNow
-                };
+                    throw new Exception("Une erreur est survenue");
+                }
 
-                return _passwordRepository.UpdatePasswordAsync(password, id, userId);
+
+                if (token.NumberUses > 0)
+                {
+                    token.NumberUses--;
+                    await _tokenService.UpdateToken(token);
+
+                    var passwordHashed = _hashPasswordService.EncryptPassword(passwordDto.PasswordHash, token.TokenValue);
+
+                    var updatePassword = new Password
+                    {
+                        Title = passwordDto.Title,
+                        Notes = passwordDto.Notes,
+                        Url = passwordDto.Url,
+                        Username = passwordDto.Username,
+                        PasswordHash = passwordHashed,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+
+                    return await _passwordRepository.UpdatePasswordAsync(updatePassword, passwordId, userId);
+
+                }else
+                {
+                    string tokenValue = _hashPasswordService.GenerateToken();
+
+                    // Déchiffrez le mot de passe
+                    var actualPassword = _hashPasswordService.DecryptPassword(password.PasswordHash, token.TokenValue);
+
+                    var passwordHashed = _hashPasswordService.EncryptPassword(actualPassword, tokenValue);
+
+                    var newToken = new Token
+                    {
+                        TokenValue = tokenValue,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow,
+                        PasswordId = passwordId,
+                        NumberUses = 3
+                    };
+
+                    await _tokenRepository.AddTokenAsync(newToken);
+
+                    password.Title = passwordDto.Title;
+                    password.Notes = passwordDto.Notes;
+                    password.Url = passwordDto.Url;
+                    password.Username = passwordDto.Username;
+                    password.PasswordHash = passwordHashed;
+                    password.UpdatedAt = DateTime.UtcNow;
+                    password.TokenId = newToken.Id;
+
+                    return await _passwordRepository.UpdatePasswordAsync(password, passwordId, userId);
+
+                }
+
+
             }
             catch (Exception ex)
             {
                 throw new Exception("Une erreur s'est produite lors de la mise à jour du mot de passe.", ex);
+            }
+        }
+
+        /// <summary>
+        /// Get password by Id for the middleware
+        /// </summary>
+        /// <param name="passwordId"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public async Task<Password?> GetPasswordByIdAsync(Guid passwordId)
+        {
+            try
+            {
+                var item = await _passwordRepository.FindByIdAsync(passwordId);
+
+                if (item == null)
+                {
+                    throw new Exception($"Le mot de passe avec l'ID {passwordId} n'a pas été trouvé.");
+                }
+
+                var password = new Password
+                {
+                    Id = item.Id,
+                    PasswordHash = item.PasswordHash,
+                    Notes = item.Notes,
+                    Url = item.Url,
+                    TokenId = item.TokenId,
+                };
+
+                return password;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Une erreur s'est produite lors de la récupération du mot de passe: {passwordId}. ", ex);
             }
         }
     }
