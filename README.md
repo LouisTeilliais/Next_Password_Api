@@ -49,7 +49,4 @@ Once migrations are done, to create an API road follow this :
 5. Create a Controller
 
 
-## TODO 
-
-[] Bug sur le Get all password 
 

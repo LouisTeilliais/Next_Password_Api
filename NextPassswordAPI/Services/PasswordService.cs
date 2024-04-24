@@ -164,6 +164,8 @@ namespace NextPassswordAPI.Services
                 var password = new Password
                 {
                     Id = item.Id,
+                    Title = item.Title,
+                    Username = item.Username,
                     PasswordHash = item.PasswordHash,
                     Notes = item.Notes,
                     Url = item.Url,
