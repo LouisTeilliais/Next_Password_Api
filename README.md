@@ -18,6 +18,12 @@ Wait few seconds and the database is up !
 
 Now to get the last version of database you have to run migrations : 
 
+Init migrations
+
+````
+dotnet ef migrations add <NameOfMigrations>
+```` 
+
 Update database 
 
 ````
@@ -47,6 +53,4 @@ Once migrations are done, to create an API road follow this :
 3. Create an Iterface Service
 4. Create a Service
 5. Create a Controller
-
-
 
