@@ -159,8 +159,6 @@ namespace NextPassswordAPI.Services
                     throw new Exception("Une erreur est survenue");
                 }
 
-               /* var password = _hashPasswordService.DecryptPassword(item.PasswordHash, token.TokenValue);*/
-
                 var password = new Password
                 {
                     Id = item.Id,
